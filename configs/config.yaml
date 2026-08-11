@@ -1,0 +1,30 @@
+# Riproducibilità
+seed: 42
+
+# Dataset
+num_packets: 20
+
+# Partizioni
+probe_size: 3000
+
+# Preprocessing
+packet_size_transform: log1p
+interarrival_transform: log1p
+direction_mapping:
+  in: -1
+  out: 1
+padding: mask
+standardization: training_only
+
+# Classificazione
+num_classes: 20
+binary_classes: 2
+
+# Bilanciamento
+pretraining_balanced: true
+
+# Riproducibilità degli esperimenti
+num_seeds: 3
+
+# Git
+commit: null
