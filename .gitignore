@@ -1,15 +1,21 @@
 # Dataset
+
 data/raw/
-data/processed/
+data/processed/*
+!data/processed/
+!data/processed/ustc_tfc2016_preprocessed.parquet
 
 # Python
+
 __pycache__/
 *.py[cod]
 .venv/
 venv/
 
 # Jupyter
+
 .ipynb_checkpoints/
 
 # Sistema operativo
+
 .DS_Store
