@@ -1,0 +1,36 @@
+{
+  "_descrizione": "File di configurazione per il pre-addestramento self-supervised di MiniNet",
+  
+  "_commento_dati": "Percorso del dataset parquet e impostazioni di caricamento",
+  "dataset_path": "data/processed/ustc_tfc2016_preprocessed.parquet",
+  "n_pkt": 20,
+  "batch_size": 256,
+  "num_workers": 2,
+
+  "_commento_masking": "Percentuale di pacchetti validi da nascondere al modello durante il pre-addestramento",
+  "mask_ratio": 0.30,
+
+  "_commento_architettura": "Iperparametri dell'architettura Transformer (MiniNetEncoder) - ideali da esplorare in HPO",
+  "d_model": 64,
+  "n_layers": 4,
+  "n_heads": 4,
+  "dim_feedforward_multiplier": 4,
+
+  "_commento_ottimizzazione": "Parametri dell'algoritmo di ottimizzazione (AdamW)",
+  "epochs": 1,
+  "learning_rate": 0.001,
+  "weight_decay": 0.0001,
+  "seed": 42,
+  "device": "cpu",
+  "log_interval": 100,
+
+  "_commento_valutazione": "Impostazioni per misurare la qualità delle rappresentazioni per guidare l'HPO",
+  "evaluate_probe_on_val": true,
+  "probe_max_iter": 300,
+  "probe_solver": "saga",
+
+  "_commento_output": "Cartella in cui salvare i pesi dell'encoder pre-addestrato e le metriche finali",
+  "output_dir": "res/pretraining",
+  "save_model_filename": "pretrained_encoder.pt",
+  "metrics_filename": "pretrain_metrics.json"
+}
