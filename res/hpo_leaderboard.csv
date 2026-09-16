@@ -1,0 +1,11 @@
+trial,config,train_recon_loss,val_recon_loss,probe_val_acc,probe_val_f1_macro,delta_vs_baseline,duration_s,status
+0,"d=64 L=4 H=4 lr=1e-3 bs=512 E5 random",0.2468,0.2422,75.59,75.86,0.00,4312,Baseline
+1,"d=64 L=4 H=4 lr=3e-4 cosine warmup=200 grad_clip=1.0 bs=512 E5",0.2963,0.2877,75.30,75.21,-0.65,4447,Completed
+2,"d=128 L=4 H=8 lr=1e-3 grad_clip=1.0 bs=512 E5",0.2067,0.2229,75.75,76.03,+0.17,6185,Completed
+3,"d=128 L=4 H=8 lr=1e-3 span_mask=0.35 w_iat=0.5 clip=1.0 bs=512 E5",0.1484,0.5031,77.32,79.09,+3.23,6012,Completed-NEW-BEST
+4,"d=128 L=4 H=8 lr=1e-3 span_mask=0.30 w_iat=0.5 wd=1e-3 clip=1.0 bs=512 E5",0.1492,0.5240,80.23,80.25,+4.39,6199,Completed-NEW-BEST
+5,"d=128 L=4 H=8 lr=1e-3 span=0.25 w_iat=0.5 wd=5e-3 cosine warm=100 clip=1.0 bs=512 E5",0.1333,0.4350,78.28,79.38,+2.72,6301,Completed
+6,"d=128 L=4 H=8 lr=1e-3 span=0.30 w_iat=0.5 wd=1e-3 clip=1.0 bs=512 E7",0.1418,0.4762,79.93,78.37,+1.71,8788,Completed
+7,"d=128 L=6 H=8 lr=1e-3 span=0.30 w_iat=0.5 wd=1e-3 clip=1.0 bs=512 E5",0.1475,0.3985,77.36,76.89,+0.23,8999,Completed
+8,"d=128 L=4 H=8 lr=1e-3 span=0.35 w_iat=0.5 w_dir=2.0 wd=1e-3 clip=1.0 bs=512 E5",0.1973,0.4867,78.12,77.61,+0.95,6326,Completed
+9,"d=128 L=4 H=8 lr=1e-3 span=0.30 w_size=2.0 w_iat=0.5 wd=1e-3 clip=1.0 bs=512 E5",0.2213,0.4696,77.84,77.66,+1.00,6280,Completed

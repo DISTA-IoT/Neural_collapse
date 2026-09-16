@@ -1,28 +1,40 @@
 {
-  "_descrizione": "File di configurazione per il pre-addestramento self-supervised di MiniNet",
-  
+  "_descrizione": "Configurazione CAMPIONE HPO Trial 5 (Ottimo di Pareto) — Val Loss = 0.435, F1-macro = 79.38%",
+  "_nota": "Risultato della campagna HPO del 2026-09-15/16, equilibrio ideale tra compressione P(X) ed espressività per Y",
+
   "_commento_dati": "Percorso del dataset parquet e impostazioni di caricamento",
   "dataset_path": "data/processed/ustc_tfc2016_preprocessed.parquet",
   "n_pkt": 20,
-  "batch_size": 256,
+  "batch_size": 512,
   "num_workers": 2,
 
-  "_commento_masking": "Percentuale di pacchetti validi da nascondere al modello durante il pre-addestramento",
-  "mask_ratio": 0.30,
+  "_commento_masking": "Span masking con burst di 2-4 pacchetti contigui al 25%",
+  "mask_ratio": 0.25,
+  "masking_strategy": "span",
+  "span_min": 2,
+  "span_max": 4,
 
-  "_commento_architettura": "Iperparametri dell'architettura Transformer (MiniNetEncoder) - ideali da esplorare in HPO",
-  "d_model": 64,
+  "_commento_architettura": "d=128, L=4, H=8 — architettura bilanciata a 4 layer",
+  "d_model": 128,
   "n_layers": 4,
-  "n_heads": 4,
+  "n_heads": 8,
   "dim_feedforward_multiplier": 4,
 
-  "_commento_ottimizzazione": "Parametri dell'algoritmo di ottimizzazione (AdamW)",
-  "epochs": 1,
+  "_commento_ottimizzazione": "Cosine annealing con warmup 100 step e weight decay 5e-3 per regolarizzazione ottimale",
+  "epochs": 5,
   "learning_rate": 0.001,
-  "weight_decay": 0.0001,
+  "weight_decay": 0.005,
+  "scheduler": "cosine",
+  "warmup_steps": 100,
+  "grad_clip": 1.0,
   "seed": 42,
   "device": "cpu",
   "log_interval": 100,
+
+  "_commento_loss_weights": "w_iat=0.5 riduce la dominanza dei gradienti IAT (jitter non discriminativo)",
+  "w_size": 1.0,
+  "w_iat": 0.5,
+  "w_dir": 1.0,
 
   "_commento_valutazione": "Impostazioni per misurare la qualità delle rappresentazioni per guidare l'HPO",
   "evaluate_probe_on_val": true,
@@ -31,6 +43,6 @@
 
   "_commento_output": "Cartella in cui salvare i pesi dell'encoder pre-addestrato e le metriche finali",
   "output_dir": "res/pretraining",
-  "save_model_filename": "pretrained_encoder.pt",
+  "save_model_filename": "best_encoder.pt",
   "metrics_filename": "pretrain_metrics.json"
 }

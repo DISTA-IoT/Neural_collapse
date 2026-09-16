@@ -1,0 +1,121 @@
+
+=======================================================
+AVVIO PRE-TRAINING SELF-SUPERVISED
+Device utilizzato: cpu
+Configurazione: {
+  "dataset_path": "data/processed/ustc_tfc2016_preprocessed.parquet",
+  "n_pkt": 20,
+  "batch_size": 512,
+  "num_workers": 2,
+  "mask_ratio": 0.3,
+  "d_model": 128,
+  "n_layers": 4,
+  "n_heads": 8,
+  "dim_feedforward_multiplier": 4,
+  "epochs": 5,
+  "learning_rate": 0.001,
+  "weight_decay": 0.001,
+  "seed": 42,
+  "device": "cpu",
+  "log_interval": 100,
+  "evaluate_probe_on_val": true,
+  "probe_max_iter": 300,
+  "probe_solver": "saga",
+  "output_dir": "res/pretraining_trial_4",
+  "save_model_filename": "pretrained_encoder.pt",
+  "metrics_filename": "pretrain_metrics.json",
+  "grad_clip": 1.0,
+  "masking_strategy": "span",
+  "w_iat": 0.5
+}
+=======================================================
+
+Caricamento dati da data/processed/ustc_tfc2016_preprocessed.parquet...
+Caricati 562549 flussi totali in 1.43s.
+Split utilizzati: Train=393783, Val=84383
+/home/jesusc/Neural_collapse/scripts/pretrain.py:145: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.body = nn.TransformerEncoder(layer_conf, num_layers=layers)
+Parametri addestrabili: Encoder=796,416, ReconstructionHead=387
+Masking strategy: span | Loss weights: size=1.0, iat=0.5, dir=1.0
+Gradient clipping: max_norm=1.0
+
+--- Inizio Epoca 1/5 ---
+  [Epoca 1 | Batch  100/770] Loss: 1.1290 (Size: 0.3973, IAT: 0.7989, Dir: 0.3323) LR: 0.001000 [160.8s]
+  [Epoca 1 | Batch  200/770] Loss: 0.7696 (Size: 0.2670, IAT: 0.5103, Dir: 0.2475) LR: 0.001000 [319.8s]
+  [Epoca 1 | Batch  300/770] Loss: 0.6158 (Size: 0.2171, IAT: 0.3933, Dir: 0.2021) LR: 0.001000 [475.3s]
+  [Epoca 1 | Batch  400/770] Loss: 0.5296 (Size: 0.1897, IAT: 0.3294, Dir: 0.1752) LR: 0.001000 [643.2s]
+  [Epoca 1 | Batch  500/770] Loss: 0.4730 (Size: 0.1722, IAT: 0.2879, Dir: 0.1568) LR: 0.001000 [806.8s]
+  [Epoca 1 | Batch  600/770] Loss: 0.4330 (Size: 0.1602, IAT: 0.2588, Dir: 0.1434) LR: 0.001000 [960.2s]
+  [Epoca 1 | Batch  700/770] Loss: 0.4025 (Size: 0.1508, IAT: 0.2373, Dir: 0.1330) LR: 0.001000 [1118.8s]
+  [Epoca 1 | Batch  770/770] Loss: 0.3854 (Size: 0.1455, IAT: 0.2253, Dir: 0.1272) LR: 0.001000 [1230.6s]
+--> Calcolo loss di ricostruzione su Validation Set...
+✓ Epoca 1 completata: Train Loss = 0.3854, Val Loss = 0.6482
+
+--- Inizio Epoca 2/5 ---
+  [Epoca 2 | Batch  100/770] Loss: 0.2090 (Size: 0.0910, IAT: 0.1014, Dir: 0.0674) LR: 0.001000 [155.6s]
+  [Epoca 2 | Batch  200/770] Loss: 0.2040 (Size: 0.0904, IAT: 0.0972, Dir: 0.0651) LR: 0.001000 [312.4s]
+  [Epoca 2 | Batch  300/770] Loss: 0.2015 (Size: 0.0897, IAT: 0.0964, Dir: 0.0635) LR: 0.001000 [471.8s]
+  [Epoca 2 | Batch  400/770] Loss: 0.1983 (Size: 0.0889, IAT: 0.0954, Dir: 0.0618) LR: 0.001000 [628.6s]
+  [Epoca 2 | Batch  500/770] Loss: 0.1951 (Size: 0.0879, IAT: 0.0936, Dir: 0.0604) LR: 0.001000 [783.4s]
+  [Epoca 2 | Batch  600/770] Loss: 0.1934 (Size: 0.0873, IAT: 0.0928, Dir: 0.0597) LR: 0.001000 [941.4s]
+  [Epoca 2 | Batch  700/770] Loss: 0.1915 (Size: 0.0863, IAT: 0.0922, Dir: 0.0591) LR: 0.001000 [1099.3s]
+  [Epoca 2 | Batch  770/770] Loss: 0.1899 (Size: 0.0857, IAT: 0.0912, Dir: 0.0586) LR: 0.001000 [1207.7s]
+--> Calcolo loss di ricostruzione su Validation Set...
+✓ Epoca 2 completata: Train Loss = 0.1899, Val Loss = 0.5851
+
+--- Inizio Epoca 3/5 ---
+  [Epoca 3 | Batch  100/770] Loss: 0.1744 (Size: 0.0807, IAT: 0.0813, Dir: 0.0531) LR: 0.001000 [153.6s]
+  [Epoca 3 | Batch  200/770] Loss: 0.1742 (Size: 0.0809, IAT: 0.0818, Dir: 0.0524) LR: 0.001000 [309.4s]
+  [Epoca 3 | Batch  300/770] Loss: 0.1707 (Size: 0.0795, IAT: 0.0804, Dir: 0.0510) LR: 0.001000 [467.2s]
+  [Epoca 3 | Batch  400/770] Loss: 0.1697 (Size: 0.0794, IAT: 0.0792, Dir: 0.0507) LR: 0.001000 [621.5s]
+  [Epoca 3 | Batch  500/770] Loss: 0.1689 (Size: 0.0789, IAT: 0.0790, Dir: 0.0505) LR: 0.001000 [774.8s]
+  [Epoca 3 | Batch  600/770] Loss: 0.1684 (Size: 0.0789, IAT: 0.0786, Dir: 0.0502) LR: 0.001000 [934.0s]
+  [Epoca 3 | Batch  700/770] Loss: 0.1685 (Size: 0.0788, IAT: 0.0788, Dir: 0.0503) LR: 0.001000 [1091.2s]
+  [Epoca 3 | Batch  770/770] Loss: 0.1676 (Size: 0.0786, IAT: 0.0782, Dir: 0.0500) LR: 0.001000 [1197.6s]
+--> Calcolo loss di ricostruzione su Validation Set...
+✓ Epoca 3 completata: Train Loss = 0.1676, Val Loss = 0.5017
+
+--- Inizio Epoca 4/5 ---
+  [Epoca 4 | Batch  100/770] Loss: 0.1610 (Size: 0.0769, IAT: 0.0747, Dir: 0.0467) LR: 0.001000 [154.3s]
+  [Epoca 4 | Batch  200/770] Loss: 0.1623 (Size: 0.0776, IAT: 0.0737, Dir: 0.0479) LR: 0.001000 [310.3s]
+  [Epoca 4 | Batch  300/770] Loss: 0.1613 (Size: 0.0770, IAT: 0.0738, Dir: 0.0474) LR: 0.001000 [464.7s]
+  [Epoca 4 | Batch  400/770] Loss: 0.1598 (Size: 0.0765, IAT: 0.0722, Dir: 0.0471) LR: 0.001000 [619.4s]
+  [Epoca 4 | Batch  500/770] Loss: 0.1584 (Size: 0.0761, IAT: 0.0718, Dir: 0.0464) LR: 0.001000 [780.1s]
+  [Epoca 4 | Batch  600/770] Loss: 0.1582 (Size: 0.0762, IAT: 0.0714, Dir: 0.0464) LR: 0.001000 [939.1s]
+  [Epoca 4 | Batch  700/770] Loss: 0.1571 (Size: 0.0756, IAT: 0.0710, Dir: 0.0460) LR: 0.001000 [1096.2s]
+  [Epoca 4 | Batch  770/770] Loss: 0.1569 (Size: 0.0756, IAT: 0.0708, Dir: 0.0459) LR: 0.001000 [1203.2s]
+--> Calcolo loss di ricostruzione su Validation Set...
+✓ Epoca 4 completata: Train Loss = 0.1569, Val Loss = 0.5258
+
+--- Inizio Epoca 5/5 ---
+  [Epoca 5 | Batch  100/770] Loss: 0.1541 (Size: 0.0756, IAT: 0.0677, Dir: 0.0446) LR: 0.001000 [162.5s]
+  [Epoca 5 | Batch  200/770] Loss: 0.1537 (Size: 0.0748, IAT: 0.0682, Dir: 0.0449) LR: 0.001000 [322.5s]
+  [Epoca 5 | Batch  300/770] Loss: 0.1508 (Size: 0.0734, IAT: 0.0675, Dir: 0.0436) LR: 0.001000 [477.9s]
+  [Epoca 5 | Batch  400/770] Loss: 0.1500 (Size: 0.0734, IAT: 0.0668, Dir: 0.0431) LR: 0.001000 [631.3s]
+  [Epoca 5 | Batch  500/770] Loss: 0.1495 (Size: 0.0731, IAT: 0.0668, Dir: 0.0430) LR: 0.001000 [786.3s]
+  [Epoca 5 | Batch  600/770] Loss: 0.1494 (Size: 0.0729, IAT: 0.0670, Dir: 0.0429) LR: 0.001000 [941.7s]
+  [Epoca 5 | Batch  700/770] Loss: 0.1495 (Size: 0.0731, IAT: 0.0668, Dir: 0.0429) LR: 0.001000 [1098.0s]
+  [Epoca 5 | Batch  770/770] Loss: 0.1492 (Size: 0.0732, IAT: 0.0664, Dir: 0.0428) LR: 0.001000 [1205.9s]
+--> Calcolo loss di ricostruzione su Validation Set...
+✓ Epoca 5 completata: Train Loss = 0.1492, Val Loss = 0.5240
+
+Addestramento completato in 103.32 minuti.
+
+--> Estrazione rappresentazioni z_cls con encoder congelato per il Linear Probe...
+    Estrazione completata in 155.2s. Shape z_train: (393783, 128), z_val: (84383, 128)
+--> Addestramento Regressione Logistica (solver=saga, max_iter=300)...
+/home/jesusc/miniconda3/lib/python3.13/site-packages/sklearn/linear_model/_logistic.py:1435: FutureWarning: 'n_jobs' has no effect since 1.8 and will be removed in 1.10. You provided 'n_jobs=-1', please leave it unspecified.
+  warnings.warn(msg, category=FutureWarning)
+    Fit completato in 610.7s.
+
+=======================================================
+RISULTATI LINEAR PROBE SU VALIDATION (METRICA HPO):
+  Accuracy:    80.23%
+  F1 (Macro):   80.25%
+  F1 (Weighted):79.17%
+=======================================================
+
+✓ Modello pre-addestrato salvato in: res/pretraining_trial_4/pretrained_encoder.pt
+✓ Metriche salvate in: res/pretraining_trial_4/pretrain_metrics.json
+
+Esecuzione terminata con successo.

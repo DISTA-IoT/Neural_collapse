@@ -30,6 +30,7 @@ import os
 import sys
 import json
 import time
+import math
 import argparse
 import random
 import numpy as np
@@ -37,6 +38,7 @@ import pandas as pd
 
 import torch
 import torch.nn as nn
+from torch.optim.lr_scheduler import CosineAnnealingLR, LambdaLR
 from torch.utils.data import Dataset, DataLoader
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score
@@ -222,10 +224,52 @@ def create_pretraining_mask(pad_mask: torch.Tensor, mask_ratio: float = 0.30) ->
     return mask
 
 
-def compute_reconstruction_loss(pred_size, pred_iat, pred_dir, target_x, mask):
+def create_span_mask(pad_mask: torch.Tensor, mask_ratio: float = 0.30,
+                     min_span: int = 2, max_span: int = 4) -> torch.Tensor:
+    """
+    Span Masking (Burst Masking): maschera blocchi consecutivi di pacchetti.
+    Nel traffico di rete, il contesto temporale locale è fondamentale: mascherare
+    burst contigui costringe l'encoder a imparare dipendenze a più lungo raggio.
+    """
+    batch_size, seq_len = pad_mask.shape
+    valid = ~pad_mask  # True = pacchetto reale
+    mask = torch.zeros_like(pad_mask, dtype=torch.bool)
+
+    for b in range(batch_size):
+        valid_positions = torch.where(valid[b])[0]
+        n_valid = len(valid_positions)
+        if n_valid == 0:
+            continue
+        n_to_mask = max(1, int(n_valid * mask_ratio))
+        masked_count = 0
+        attempts = 0
+        while masked_count < n_to_mask and attempts < n_valid * 2:
+            span_len = random.randint(min_span, max_span)
+            # Pick a random starting point among valid positions
+            start_idx = random.randint(0, n_valid - 1)
+            start_pos = valid_positions[start_idx].item()
+            for offset in range(span_len):
+                pos = start_pos + offset
+                if pos < seq_len and valid[b, pos] and not mask[b, pos]:
+                    mask[b, pos] = True
+                    masked_count += 1
+                    if masked_count >= n_to_mask:
+                        break
+            attempts += 1
+
+        # Guarantee at least 1 masked
+        if not mask[b].any() and n_valid > 0:
+            mask[b, valid_positions[0]] = True
+
+    return mask
+
+
+def compute_reconstruction_loss(pred_size, pred_iat, pred_dir, target_x, mask,
+                                 w_size=1.0, w_iat=1.0, w_dir=1.0):
     """
     Calcola l'errore di predizione (Loss) ESCLUSIVAMENTE sulle posizioni mascherate.
     Se un pacchetto non era nascosto, il modello non viene punito/premiato su di esso.
+    Supporta pesi configurabili per bilanciare le componenti della loss.
     """
     # I target reali estratti dal tensore originale
     # target_x ha forma (B, n_pkt, 3) dove:
@@ -254,8 +298,8 @@ def compute_reconstruction_loss(pred_size, pred_iat, pred_dir, target_x, mask):
     # 3. Binary Cross-Entropy con Logits per la direzione (in entrata vs uscita)
     loss_dir = nn.functional.binary_cross_entropy_with_logits(pred_d_masked, target_d_masked)
 
-    # Loss totale = somma delle 3 componenti
-    total_loss = loss_size + loss_iat + loss_dir
+    # Loss totale = somma pesata delle 3 componenti
+    total_loss = w_size * loss_size + w_iat * loss_iat + w_dir * loss_dir
     return total_loss, loss_size.item(), loss_iat.item(), loss_dir.item()
 
 
@@ -390,10 +434,40 @@ def run_pretraining(cfg: dict):
         weight_decay=cfg["weight_decay"]
     )
 
+    # 5b. Learning Rate Scheduler (opzionale)
+    scheduler = None
+    n_batches_per_epoch = len(train_loader)
+    total_steps = n_batches_per_epoch * cfg["epochs"]
+    warmup_steps = cfg.get("warmup_steps", 0)
+    grad_clip = cfg.get("grad_clip", 0.0)  # 0 = no clipping
+
+    if cfg.get("scheduler", "none") == "cosine":
+        if warmup_steps > 0:
+            # Cosine with linear warmup
+            def lr_lambda(step):
+                if step < warmup_steps:
+                    return float(step) / float(max(1, warmup_steps))
+                progress = float(step - warmup_steps) / float(max(1, total_steps - warmup_steps))
+                return max(0.0, 0.5 * (1.0 + math.cos(math.pi * progress)))
+            scheduler = LambdaLR(optimizer, lr_lambda)
+        else:
+            scheduler = CosineAnnealingLR(optimizer, T_max=total_steps)
+        print(f"Scheduler: Cosine Annealing (warmup={warmup_steps} steps, total={total_steps} steps)")
+
+    # 5c. Configurazione mascheramento e loss weights
+    masking_strategy = cfg.get("masking_strategy", "random")  # "random" or "span"
+    w_size = cfg.get("w_size", 1.0)
+    w_iat = cfg.get("w_iat", 1.0)
+    w_dir = cfg.get("w_dir", 1.0)
+    print(f"Masking strategy: {masking_strategy} | Loss weights: size={w_size}, iat={w_iat}, dir={w_dir}")
+    if grad_clip > 0:
+        print(f"Gradient clipping: max_norm={grad_clip}")
+
     # 6. Ciclo di addestramento sulle epoche
     epochs = cfg["epochs"]
     log_interval = cfg.get("log_interval", 100)
     history = []
+    global_step = 0
 
     start_training_time = time.time()
 
@@ -413,8 +487,14 @@ def run_pretraining(cfg: dict):
             x = x.to(device)
             pad_mask = pad_mask.to(device)
 
-            # A. Generiamo la maschera per nascondere il 30% dei pacchetti validi
-            mask = create_pretraining_mask(pad_mask, mask_ratio=cfg["mask_ratio"])
+            # A. Generiamo la maschera secondo la strategia configurata
+            if masking_strategy == "span":
+                mask = create_span_mask(
+                    pad_mask, mask_ratio=cfg["mask_ratio"],
+                    min_span=cfg.get("span_min", 2), max_span=cfg.get("span_max", 4)
+                )
+            else:
+                mask = create_pretraining_mask(pad_mask, mask_ratio=cfg["mask_ratio"])
 
             # B. Creiamo l'input corrotto (sostituiamo i valori mascherati con zeri per non farli sbirciare)
             x_corrupted = x.clone()
@@ -433,16 +513,29 @@ def run_pretraining(cfg: dict):
             # E. Forward pass attraverso la testa di ricostruzione
             pred_size, pred_iat, pred_dir = recon_head(h_packets)
 
-            # F. Calcolo della loss solo sui pacchetti mascherati
+            # F. Calcolo della loss solo sui pacchetti mascherati (con pesi configurabili)
             loss, l_s, l_i, l_d = compute_reconstruction_loss(
-                pred_size, pred_iat, pred_dir, x, mask
+                pred_size, pred_iat, pred_dir, x, mask,
+                w_size=w_size, w_iat=w_iat, w_dir=w_dir
             )
 
             # G. Backward pass (calcolo delle derivate/gradienti con autograd)
             loss.backward()
 
+            # G2. Gradient clipping (se configurato)
+            if grad_clip > 0:
+                torch.nn.utils.clip_grad_norm_(
+                    list(model.parameters()) + list(recon_head.parameters()),
+                    max_norm=grad_clip
+                )
+
             # H. Aggiornamento dei pesi (discesa del gradiente con AdamW)
             optimizer.step()
+
+            # H2. Scheduler step (per-step, non per-epoch)
+            if scheduler is not None:
+                scheduler.step()
+            global_step += 1
 
             # Accumulo statistiche per il log
             running_loss += loss.item()
@@ -456,9 +549,10 @@ def run_pretraining(cfg: dict):
                 avg_i = running_i / step
                 avg_d = running_d / step
                 elapsed = time.time() - epoch_start
+                current_lr = optimizer.param_groups[0]['lr']
                 print(f"  [Epoca {epoch} | Batch {step:4d}/{n_batches}] "
                       f"Loss: {avg_l:.4f} (Size: {avg_s:.4f}, IAT: {avg_i:.4f}, Dir: {avg_d:.4f}) "
-                      f"[{elapsed:.1f}s]")
+                      f"LR: {current_lr:.6f} [{elapsed:.1f}s]")
 
         train_epoch_loss = running_loss / n_batches
 
@@ -579,6 +673,15 @@ def parse_arguments():
     parser.add_argument("--epochs", type=int, default=None, help="Numero di epoche.")
     parser.add_argument("--seed", type=int, default=None, help="Seed per la riproducibilità.")
     parser.add_argument("--output_dir", type=str, default=None, help="Cartella di output per pesi e metriche.")
+    parser.add_argument("--weight_decay", type=float, default=None, help="Weight decay per AdamW.")
+    parser.add_argument("--scheduler", type=str, default=None, choices=["none", "cosine"], help="LR scheduler.")
+    parser.add_argument("--warmup_steps", type=int, default=None, help="Warmup steps per scheduler.")
+    parser.add_argument("--grad_clip", type=float, default=None, help="Max norm per gradient clipping.")
+    parser.add_argument("--masking_strategy", type=str, default=None, choices=["random", "span"], help="Masking strategy.")
+    parser.add_argument("--w_size", type=float, default=None, help="Weight for size loss.")
+    parser.add_argument("--w_iat", type=float, default=None, help="Weight for IAT loss.")
+    parser.add_argument("--w_dir", type=float, default=None, help="Weight for direction loss.")
+    parser.add_argument("--dim_feedforward_multiplier", type=int, default=None, help="FFN multiplier.")
 
     return parser.parse_args()
 
@@ -594,24 +697,16 @@ if __name__ == "__main__":
         config = json.load(f)
 
     # Sovrascrittura dei parametri da CLI se forniti
-    if args.learning_rate is not None:
-        config["learning_rate"] = args.learning_rate
-    if args.d_model is not None:
-        config["d_model"] = args.d_model
-    if args.n_layers is not None:
-        config["n_layers"] = args.n_layers
-    if args.n_heads is not None:
-        config["n_heads"] = args.n_heads
-    if args.mask_ratio is not None:
-        config["mask_ratio"] = args.mask_ratio
-    if args.batch_size is not None:
-        config["batch_size"] = args.batch_size
-    if args.epochs is not None:
-        config["epochs"] = args.epochs
-    if args.seed is not None:
-        config["seed"] = args.seed
-    if args.output_dir is not None:
-        config["output_dir"] = args.output_dir
+    cli_overrides = [
+        "learning_rate", "d_model", "n_layers", "n_heads", "mask_ratio",
+        "batch_size", "epochs", "seed", "output_dir", "weight_decay",
+        "scheduler", "warmup_steps", "grad_clip", "masking_strategy",
+        "w_size", "w_iat", "w_dir", "dim_feedforward_multiplier"
+    ]
+    for key in cli_overrides:
+        val = getattr(args, key, None)
+        if val is not None:
+            config[key] = val
 
     # Eseguiamo il pre-training
     results = run_pretraining(config)

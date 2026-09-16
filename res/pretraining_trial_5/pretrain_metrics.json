@@ -1,0 +1,77 @@
+{
+  "status": "SUCCESS",
+  "config": {
+    "_descrizione": "File di configurazione per il pre-addestramento self-supervised di MiniNet",
+    "_commento_dati": "Percorso del dataset parquet e impostazioni di caricamento",
+    "dataset_path": "data/processed/ustc_tfc2016_preprocessed.parquet",
+    "n_pkt": 20,
+    "batch_size": 512,
+    "num_workers": 2,
+    "_commento_masking": "Percentuale di pacchetti validi da nascondere al modello durante il pre-addestramento",
+    "mask_ratio": 0.25,
+    "_commento_architettura": "Iperparametri dell'architettura Transformer (MiniNetEncoder) - ideali da esplorare in HPO",
+    "d_model": 128,
+    "n_layers": 4,
+    "n_heads": 8,
+    "dim_feedforward_multiplier": 4,
+    "_commento_ottimizzazione": "Parametri dell'algoritmo di ottimizzazione (AdamW)",
+    "epochs": 5,
+    "learning_rate": 0.001,
+    "weight_decay": 0.005,
+    "seed": 42,
+    "device": "cpu",
+    "log_interval": 100,
+    "_commento_valutazione": "Impostazioni per misurare la qualit\u00e0 delle rappresentazioni per guidare l'HPO",
+    "evaluate_probe_on_val": true,
+    "probe_max_iter": 300,
+    "probe_solver": "saga",
+    "_commento_output": "Cartella in cui salvare i pesi dell'encoder pre-addestrato e le metriche finali",
+    "output_dir": "res/pretraining_trial_5",
+    "save_model_filename": "pretrained_encoder.pt",
+    "metrics_filename": "pretrain_metrics.json",
+    "scheduler": "cosine",
+    "warmup_steps": 100,
+    "grad_clip": 1.0,
+    "masking_strategy": "span",
+    "w_iat": 0.5
+  },
+  "total_params": 796416,
+  "final_train_recon_loss": 0.1333101407757827,
+  "final_val_recon_loss": 0.43500479265595926,
+  "training_duration_seconds": 6300.572575569153,
+  "history": [
+    {
+      "epoch": 1,
+      "train_recon_loss": 0.3721640032413718,
+      "val_recon_loss": 0.5551122434267943,
+      "epoch_duration_seconds": 1292.9415612220764
+    },
+    {
+      "epoch": 2,
+      "train_recon_loss": 0.18410692739409285,
+      "val_recon_loss": 0.5017146836571169,
+      "epoch_duration_seconds": 1248.7353167533875
+    },
+    {
+      "epoch": 3,
+      "train_recon_loss": 0.15544378504931153,
+      "val_recon_loss": 0.4592472746403831,
+      "epoch_duration_seconds": 1257.2577676773071
+    },
+    {
+      "epoch": 4,
+      "train_recon_loss": 0.13933748994748313,
+      "val_recon_loss": 0.4354610513105537,
+      "epoch_duration_seconds": 1238.3953824043274
+    },
+    {
+      "epoch": 5,
+      "train_recon_loss": 0.1333101407757827,
+      "val_recon_loss": 0.43500479265595926,
+      "epoch_duration_seconds": 1263.2424473762512
+    }
+  ],
+  "probe_val_accuracy": 0.7827761515945155,
+  "probe_val_f1_macro": 0.7938239375327054,
+  "probe_val_f1_weighted": 0.7720201671315542
+}
